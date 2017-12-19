@@ -2,7 +2,25 @@
 
 - name: Test distribution
   assert:
-    that: ansible_os_family == "RedHat"
+    that: >
+      ( ansible_os_family == "RedHat" and
+      ansible_distribution_major_version | int >= 6
+      ) or
+      ansible_os_family == 'Debian'
+
+- name: Add APT key
+  apt_key:
+    url: "{{ grafana_repo_key }}"
+    state: present
+  when: >
+    ansible_os_family == 'Debian'
+
+- name: Create Grafana APT repo
+  apt_repository:
+    repo: "{{ grafana_debian_apt_repository }}"
+    state: present
+  when: >
+    ansible_os_family == 'Debian'
 
 - name: Create Grafana YUM repo file
   yum_repository:
@@ -10,7 +28,11 @@
     description: Internal Grafana repo
     baseurl: "{{ grafana_yumrepo_url }}"
     gpgcheck: 0
+    gpgkey: "{{ grafana_repo_key }}"
     params: "{{ grafana_yumrepo_params }}"
+    state: present
+  when: ansible_os_family == 'Redhat'
+
 
 - name: Install Grafana package
   package:

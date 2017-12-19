@@ -2,8 +2,10 @@ grafana
 =======
 
 Role to install and configure Grafana - the metrics dashboard and graph editor.
-It is installed from [RPM package](http://docs.grafana.org/installation/rpm/)
-available in the official [YUM repo](https://packagecloud.io/grafana/stable).
+
+It supports both [RPM package](http://docs.grafana.org/installation/rpm/)
+and [DEB pacakage](http://docs.grafana.org/installation/debian/)
+available in the official [repos](https://packagecloud.io/grafana/stable).
 
 The configuration of the role is done in such way that it should not be necessary
 to change the role for any kind of configuration. All can be done either by
@@ -13,6 +15,7 @@ more details.
 
 Please report any issues or send PR.
 
+(See *Dependancies* below for details on config_encoder_filters role)
 
 Example
 -------
@@ -21,8 +24,9 @@ Example
 ---
 
 - name: Example of how to use the role
- hosts: myhost1
+  hosts: myhost1
   roles:
+    - config_encoder_filters
     - grafana
 
 - name: Example of how to modify the grafana configuration
@@ -34,6 +38,7 @@ Example
     grafana_config_server:
       http_port: 80
   roles:
+    - config_encoder_filters
     - grafana
 ```
 
@@ -44,6 +49,12 @@ Role variables
 List of variables used by the role:
 
 ```
+# GPG key used to sign both rpm and deb packages
+grafana_repo_key: https://packagecloud.io/gpg.key
+
+# APT repo URL for grafana
+grafana_debian_apt_repository: deb https://packagecloud.io/grafana/stable/debian/ jessie main
+
 # YUM repo URL
 grafana_yumrepo_url: https://packagecloud.io/grafana/stable/el/$releasever/$basearch
 
@@ -260,7 +271,7 @@ grafana_config: "{{
 Dependencies
 ------------
 
-* [`config_encoder_filters`](https://github.com/picotrading/ansible-config_encoder_filters)
+* [`config_encoder_filters`](https://github.com/jtyr/ansible-config_encoder_filters)
 
 
 License
