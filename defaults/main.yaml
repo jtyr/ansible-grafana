@@ -1,7 +1,7 @@
 ---
 
-# GPG key used to sign both rpm and deb packages
-grafana_repo_key: https://packagecloud.io/gpg.key
+# GPG key used to sign both deb packages
+grafana_debian_repo_key: https://packagecloud.io/gpg.key
 
 # APT repo URL for grafana
 grafana_debian_apt_repository: deb https://packagecloud.io/grafana/stable/debian/ jessie main

@@ -10,7 +10,7 @@
 
 - name: Add APT key
   apt_key:
-    url: "{{ grafana_repo_key }}"
+    url: "{{ grafana_debian_repo_key }}"
     state: present
   when: >
     ansible_os_family == 'Debian'
@@ -28,7 +28,6 @@
     description: Internal Grafana repo
     baseurl: "{{ grafana_yumrepo_url }}"
     gpgcheck: 0
-    gpgkey: "{{ grafana_repo_key }}"
     params: "{{ grafana_yumrepo_params }}"
     state: present
   when: ansible_os_family == 'Redhat'
@@ -88,7 +87,7 @@
 - name: Start the Grafana service
   service:
     name: "{{ grafana_service }}"
-    state: running
+    state: started
   register: grafana_service_started
   tags:
     - grafana_service
