@@ -19,8 +19,7 @@
   apt_repository:
     repo: "{{ grafana_debian_apt_repository }}"
     state: present
-  when: >
-    ansible_os_family == 'Debian'
+  when: ansible_os_family == 'Debian'
 
 - name: Create Grafana YUM repo file
   yum_repository:
@@ -30,7 +29,7 @@
     gpgcheck: 0
     params: "{{ grafana_yumrepo_params }}"
     state: present
-  when: ansible_os_family == 'Redhat'
+  when: ansible_os_family == 'RedHat'
 
 
 - name: Install Grafana package
