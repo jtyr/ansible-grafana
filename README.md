@@ -118,6 +118,8 @@ grafana_ldap_config_servers__default:
     bind_password: "{{ grafana_ldap_config_servers_bind_password }}"
     search_filter: "{{ grafana_ldap_config_servers_search_filter }}"
     search_base_dns: "{{ grafana_ldap_config_servers_search_base_dns }}"
+  - attributes: "{{ grafana_ldap_config_servers_attributes }}"
+  - group_mappings: "{{ grafana_ldap_config_servers_group_mappings }}"
 
 # Custom Servers section of the LDAP config
 grafana_ldap_config_servers__custom: []
@@ -176,8 +178,6 @@ grafana_ldap_config_servers_group_mappings: "{{
 grafana_ldap_config__default:
   verbose_logging: "{{ grafana_ldap_config_verbose_logging }}"
   servers: "{{ grafana_ldap_config_servers }}"
-  servers.attributes: "{{ grafana_ldap_config_servers_attributes }}"
-  servers.group_mappings: "{{ grafana_ldap_config_servers_group_mappings }}"
 
 # Custom LDAP config
 grafana_ldap_config__custom: {}
