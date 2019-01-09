@@ -1,20 +1,35 @@
 ---
 
 # YUM repo URL
-grafana_yumrepo_url: https://packagecloud.io/grafana/stable/el/$releasever/$basearch
+grafana_yum_repo_url: https://packages.grafana.com/oss/rpm
+
+# YUM repo GPG key URL
+grafana_yum_repo_gpgkey: https://packages.grafana.com/gpg.key
 
 # Custom YUM repo params
-grafana_yumrepo_params: {}
+grafana_yum_repo_params: {}
+
+# APT repo string
+grafana_apt_repo_string: deb https://packages.grafana.com/oss/deb stable main
+
+# GPG key for the APT repo
+grafana_apt_repo_key: "{{ grafana_yum_repo_gpgkey }}"
+
+# Custom APT repo params
+grafana_apt_repo_params: {}
 
 # Package to be installed (you can force a specific version here)
 grafana_pkg: grafana
 
-# Allow grafana to bind to TCP port <1024
-grafana_allow_low_port: no
-
 # Name of the Grafana service
 grafana_service: grafana-server
 
+
+# Path to the sysconfig file (Debian only)
+grafana_default_path: /etc/default/grafana
+
+# Path to the sysconfig file (RedHat only)
+grafana_sysconfig_path: /etc/sysconfig/grafana-server
 
 # Defautl values of the Grafana sysconfig options
 grafana_sysconfig_grafana_user: grafana
@@ -25,8 +40,10 @@ grafana_sysconfig_data_dir: /var/lib/grafana
 grafana_sysconfig_max_open_files: 10000
 grafana_sysconfig_conf_dir: /etc/grafana
 grafana_sysconfig_conf_file: "{{ grafana_sysconfig_conf_dir ~ '/grafana.ini' }}"
-grafana_sysconfig_restart_on_upgrade: "false"
+grafana_sysconfig_restart_on_upgrade: "true"
 grafana_sysconfig_plugins_dir: /var/lib/grafana/plugins
+grafana_sysconfig_provisioning_cfg_dir: /etc/grafana/provisioning
+grafana_sysconfig_pid_file_dir: /var/run/grafana
 
 # Defautl options of the Grafana sysconfig
 grafana_sysconfig__default:
@@ -40,23 +57,23 @@ grafana_sysconfig__default:
   conf_file: "{{ grafana_sysconfig_conf_file }}"
   restart_on_upgrade: "{{ grafana_sysconfig_restart_on_upgrade }}"
   plugins_dir: "{{ grafana_sysconfig_plugins_dir }}"
+  provisioning_cfg_dir: "{{ grafana_sysconfig_provisioning_cfg_dir }}"
+  pid_file_dir: "{{ grafana_sysconfig_pid_file_dir }}"
 
 # Custom options of the Grafana sysconfig
 grafana_sysconfig__custom: {}
 
 # Final Grafana sysconfig
 grafana_sysconfig: "{{
-  grafana_sysconfig__default.update(grafana_sysconfig__custom) }}{{
-  grafana_sysconfig__default }}"
+  grafana_sysconfig__default | combine(
+  grafana_sysconfig__custom) }}"
 
-
-# Logging verbosity of the LDAP config
-grafana_ldap_config_verbose_logging: false
 
 # Values of the default Servers section of the LDAP config
 grafana_ldap_config_servers_host: 127.0.0.1
 grafana_ldap_config_servers_port: 389
 grafana_ldap_config_servers_use_ssl: false
+grafana_ldap_config_servers_start_tls: false
 grafana_ldap_config_servers_ssl_skip_verify: false
 grafana_ldap_config_servers_bind_dn: cn=admin,dc=grafana,dc=org
 grafana_ldap_config_servers_bind_password: grafana
@@ -69,6 +86,7 @@ grafana_ldap_config_servers__default:
   - host: "{{ grafana_ldap_config_servers_host }}"
     port: "{{ grafana_ldap_config_servers_port }}"
     use_ssl: "{{ grafana_ldap_config_servers_use_ssl }}"
+    start_tls: "{{ grafana_ldap_config_servers_start_tls }}"
     ssl_skip_verify: "{{ grafana_ldap_config_servers_ssl_skip_verify }}"
     bind_dn: "{{ grafana_ldap_config_servers_bind_dn }}"
     bind_password: "{{ grafana_ldap_config_servers_bind_password }}"
@@ -103,8 +121,8 @@ grafana_ldap_config_servers_attributes__custom: {}
 
 # Final Servers Atributtes section of the LDAP config
 grafana_ldap_config_servers_attributes: "{{
-  grafana_ldap_config_servers_attributes__default.update(grafana_ldap_config_servers_attributes__custom) }}{{
-  grafana_ldap_config_servers_attributes__default }}"
+  grafana_ldap_config_servers_attributes__default | combine(
+  grafana_ldap_config_servers_attributes__custom) }}"
 
 # Values of the default Servers Group Mappings section of the LDAP config
 grafana_ldap_config_servers_group_mappings_admin_group_dn: cn=admins,dc=grafana,dc=org
@@ -130,7 +148,6 @@ grafana_ldap_config_servers_group_mappings: "{{
 
 # Default LDAP config
 grafana_ldap_config__default:
-  verbose_logging: "{{ grafana_ldap_config_verbose_logging }}"
   servers: "{{ grafana_ldap_config_servers }}"
   servers.attributes: "{{ grafana_ldap_config_servers_attributes }}"
   servers.group_mappings: "{{ grafana_ldap_config_servers_group_mappings }}"
@@ -140,31 +157,21 @@ grafana_ldap_config__custom: {}
 
 # Final LDAP config
 grafana_ldap_config: "{{
-  grafana_ldap_config__default.update(grafana_ldap_config__custom) }}{{
-  grafana_ldap_config__default }}"
+  grafana_ldap_config__default | combine(
+  grafana_ldap_config__custom) }}"
 
-
-# Values of the default options of the Analytics section of the Grafana config
-grafana_config_analytics_check_for_updates: "true"
-
-# Default options of the Analytics section of the Grafana config
-grafana_config_analytics__default:
-  check_for_updates: "{{ grafana_config_analytics_check_for_updates }}"
-
-# Custom options of the Analytics section of the Grafana config
-grafana_config_analytics__custom: {}
 
 # Contents of the default sections of the Grafana config
 grafana_config_paths: {}
 grafana_config_server: {}
 grafana_config_database: {}
 grafana_config_session: {}
-grafana_config_analytics: "{{
-  grafana_config_analytics__default.update(grafana_config_analytics__custom) }}{{
-  grafana_config_analytics__default }}"
+grafana_config_analytics: {}
 grafana_config_security: {}
 grafana_config_snapshots: {}
+grafana_config_dashboards: {}
 grafana_config_users: {}
+grafana_config_auth: {}
 grafana_config_auth_anonymous: {}
 grafana_config_auth_github: {}
 grafana_config_auth_google: {}
@@ -176,8 +183,21 @@ grafana_config_emails: {}
 grafana_config_log: {}
 grafana_config_lob_console: {}
 grafana_config_log_file: {}
-grafana_config_event_publisher: {}
-grafana_config_dashboard_json: {}
+grafana_config_log_syslog: {}
+grafana_config_alerting: {}
+grafana_config_explore: {}
+grafana_config_metrics: {}
+grafana_config_metrics_graphite: {}
+grafana_config_tracing_jaeger: {}
+grafana_config_grafana_com: {}
+grafana_config_external_image_storage: {}
+grafana_config_external_image_storage_s3: {}
+grafana_config_external_image_storage_webdav: {}
+grafana_config_external_image_storage_gcs: {}
+grafana_config_external_image_storage_azure_blob: {}
+grafana_config_external_image_storage_local: {}
+grafana_config_rendering: {}
+grafana_config_enterprise: {}
 
 # Default options of the Grafana config
 grafana_config__default:
@@ -188,7 +208,9 @@ grafana_config__default:
   analytics: "{{ grafana_config_analytics }}"
   security: "{{ grafana_config_security }}"
   snapshots: "{{ grafana_config_snapshots }}"
+  dashboards: "{{ grafana_config_dashboards }}"
   users: "{{ grafana_config_users }}"
+  auth: "{{ grafana_config_auth }}"
   auth.anonymous: "{{ grafana_config_auth_anonymous }}"
   auth.github: "{{ grafana_config_auth_github }}"
   auth.google: "{{ grafana_config_auth_google }}"
@@ -200,13 +222,68 @@ grafana_config__default:
   log: "{{ grafana_config_log }}"
   log.console: "{{ grafana_config_lob_console }}"
   log.file: "{{ grafana_config_log_file }}"
-  event_publisher: "{{ grafana_config_event_publisher }}"
-  dashboards.json: "{{ grafana_config_dashboard_json }}"
+  log.syslog: "{{ grafana_config_log_syslog }}"
+  alerting: "{{ grafana_config_alerting }}"
+  explore: "{{ grafana_config_explore }}"
+  metrics: "{{ grafana_config_metrics }}"
+  metrics.graphite: "{{ grafana_config_metrics_graphite }}"
+  tracing.jaeger: "{{ grafana_config_tracing_jaeger }}"
+  grafana_com: "{{ grafana_config_grafana_com }}"
+  external_image_storage: "{{ grafana_config_external_image_storage }}"
+  external_image_storage.s3: "{{ grafana_config_external_image_storage_s3 }}"
+  external_image_storage.webdav: "{{ grafana_config_external_image_storage_webdav }}"
+  external_image_storage.gcs: "{{ grafana_config_external_image_storage_gcs }}"
+  external_image_storage.azure_blob: "{{ grafana_config_external_image_storage_azure_blob }}"
+  external_image_storage.local: "{{ grafana_config_external_image_storage_local }}"
+  rendering: "{{ grafana_config_rendering }}"
+  enterprise: "{{ grafana_config_enterprise }}"
 
 # Custom options of the Grafana config
 grafana_config__custom: {}
 
 # Final Grafana config
 grafana_config: "{{
-  grafana_config__default.update(grafana_config__custom) }}{{
-  grafana_config__default }}"
+  grafana_config__default | combine(
+  grafana_config__custom) }}"
+
+
+# Values of the default Datasource file options
+grafana_provisioning_datasource_datasources: []
+grafana_provisioning_datasource_api_version: 1
+
+# Default Datasource file options
+grafana_provisioning_datasource__default:
+  apiVersion: "{{ grafana_provisioning_datasource_api_version }}"
+  datasources: "{{ grafana_provisioning_datasource_datasources }}"
+
+# Custom Datasource file options
+grafana_provisioning_datasource__custom: {}
+
+# Final definition of the Datasource provisioner
+# (see examples in README.md for more details)
+grafana_provisioning_datasource: "{{
+  grafana_provisioning_datasource__default | combine(
+  grafana_provisioning_datasource__custom) }}"
+
+
+# Values of the default Dashboard file options
+grafana_provisioning_dashboard_providers: []
+grafana_provisioning_dashboard_api_version: 1
+
+# Default Dashboard file options
+grafana_provisioning_dashboard__default:
+  apiVersion: "{{ grafana_provisioning_dashboard_api_version }}"
+  providers: "{{ grafana_provisioning_dashboard_providers }}"
+
+# Custom Dashboard file options
+grafana_provisioning_dashboard__custom: {}
+
+# Final definition of the Dashboard provisioner
+# (see examples in README.md for more details)
+grafana_provisioning_dashboard: "{{
+  grafana_provisioning_dashboard__default | combine(
+  grafana_provisioning_dashboard__custom) }}"
+
+# List of Grafana plugins
+# (see examples in README.md for more details)
+grafana_plugins: []

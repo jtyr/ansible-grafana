@@ -4,13 +4,17 @@ galaxy_info:
   author: Jiri Tyr
   description: Role to install and configure Grafana
   license: MIT
-  min_ansible_version: 2.1
+  min_ansible_version: 2.5
   platforms:
     - name: EL
       versions:
         - 6
         - 7
-  categories:
+    - name: Ubuntu
+      versions:
+        - trusty
+        - xenial
+  galaxy_tags:
     - monitoring
 dependencies:
   - config_encoder_filters

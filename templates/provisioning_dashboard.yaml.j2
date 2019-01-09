@@ -1,0 +1,3 @@
+{{ ansible_managed | comment }}
+
+{{ grafana_provisioning_dashboard | encode_yaml(convert_bools=true, convert_nums=true) }}

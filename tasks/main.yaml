@@ -2,15 +2,42 @@
 
 - name: Test distribution
   assert:
-    that: ansible_os_family == "RedHat"
+    that: >
+      ansible_facts.os_family == "RedHat" or
+      ansible_facts.os_family == 'Debian'
+  tags:
+    - grafana_assert
 
 - name: Create Grafana YUM repo file
   yum_repository:
     name: grafana
     description: Internal Grafana repo
-    baseurl: "{{ grafana_yumrepo_url }}"
-    gpgcheck: 0
-    params: "{{ grafana_yumrepo_params }}"
+    baseurl: "{{ grafana_yum_repo_url }}"
+    gpgkey: "{{ grafana_yum_repo_gpgkey }}"
+  when: >
+    ansible_facts.os_family == 'RedHat'
+  args: "{{ grafana_yum_repo_params }}"
+  tags:
+    - grafana_pkg
+
+- name: Add APT key
+  apt_key:
+    url: "{{ grafana_apt_repo_key }}"
+    state: present
+  when: >
+    ansible_facts.os_family == 'Debian'
+  tags:
+    - grafana_pkg
+
+- name: Add APT repository
+  apt_repository:
+    filename: grafana
+    repo: "{{ grafana_apt_repo_string }}"
+  args: "{{ grafana_apt_repo_params }}"
+  when: >
+    ansible_facts.os_family == 'Debian'
+  tags:
+    - grafana_pkg
 
 - name: Install Grafana package
   package:
@@ -20,6 +47,28 @@
     - Restart Grafana
   tags:
     - grafana_pkg
+
+- name: Create sysconfig file
+  template:
+    src: grafana.daemon.j2
+    dest: "{{ grafana_sysconfig_path }}"
+  when: >
+    ansible_facts.os_family == 'RedHat'
+  notify:
+    - Restart Grafana
+  tags:
+    - grafana_config
+
+- name: Create default daemon file
+  template:
+    src: grafana.daemon.j2
+    dest: "{{ grafana_default_path }}"
+  when: >
+    ansible_facts.os_family == 'Debian'
+  notify:
+    - Restart Grafana
+  tags:
+    - grafana_config
 
 - name: Create Grafana config file
   template:
@@ -39,22 +88,44 @@
   tags:
     - grafana_config
 
-- name: Check if the binary can bind to TCP port <1024
-  shell: getcap /usr/sbin/grafana-server | grep cap_net_bind_service
-  register: grafana_bind_cap
-  failed_when: False
-  changed_when: False
-  when: grafana_allow_low_port
-  tags:
-    - grafana_config
-
-- name: Set capability on the binary file to be able to bind to TCP port <1024
-  shell: setcap 'cap_net_bind_service=+ep' /usr/sbin/grafana-server
-  when: grafana_allow_low_port and grafana_bind_cap.rc > 0
+- name: Create Datasource provisioner file
+  template:
+    src: provisioning_datasource.yaml.j2
+    dest: "{{ grafana_sysconfig_conf_dir ~ '/provisioning/datasources/main.yaml' }}"
+  when: >
+    grafana_provisioning_datasource_datasources | length > 0 or
+    'deleteDatasources' in grafana_provisioning_datasource
   notify:
     - Restart Grafana
   tags:
     - grafana_config
+
+- name: Create Dashboard provisioner file
+  template:
+    src: provisioning_dashboard.yaml.j2
+    dest: "{{ grafana_sysconfig_conf_dir ~ '/provisioning/dashboards/main.yaml' }}"
+  when: >
+    grafana_provisioning_dashboard_providers | length > 0
+  notify:
+    - Restart Grafana
+  tags:
+    - grafana_config
+
+- name: Install Grafana plugins
+  grafana_plugin:
+    grafana_plugin_url: "{{ item.grafana_plugin_url | default(omit) }}"
+    grafana_plugins_dir: "{{ item.grafana_plugins_dir | default(omit) }}"
+    grafana_repo: "{{ item.grafana_repo | default(omit) }}"
+    name: "{{ item.name }}"
+    state: "{{ item.state | default(omit) }}"
+    version: "{{ item.version | default(omit) }}"
+  with_items: "{{ grafana_plugins }}"
+  when: >
+    grafana_plugins | length > 0
+  notify:
+    - Restart Grafana
+  tags:
+    - grafana_plugins
 
 - name: Enable the Grafana service
   service:
@@ -66,7 +137,7 @@
 - name: Start the Grafana service
   service:
     name: "{{ grafana_service }}"
-    state: running
+    state: started
   register: grafana_service_started
   tags:
     - grafana_service
